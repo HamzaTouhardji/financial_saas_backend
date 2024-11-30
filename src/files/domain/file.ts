@@ -6,8 +6,6 @@ import { FileConfig, FileDriver } from '../config/file-config.type';
 
 import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-import { AppConfig } from '../../config/app-config.type';
-import appConfig from '../../config/app.config';
 
 export class FileType {
   @ApiProperty({
@@ -24,7 +22,7 @@ export class FileType {
   @Transform(
     ({ value }) => {
       if ((fileConfig() as FileConfig).driver === FileDriver.LOCAL) {
-        return (appConfig() as AppConfig).backendDomain + value;
+        return value;
       } else if (
         [FileDriver.S3_PRESIGNED, FileDriver.S3].includes(
           (fileConfig() as FileConfig).driver,

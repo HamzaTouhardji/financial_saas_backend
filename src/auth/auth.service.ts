@@ -21,6 +21,7 @@ import { ConfigService } from '@nestjs/config';
 import { JwtRefreshPayloadType } from './strategies/types/jwt-refresh-payload.type';
 import { JwtPayloadType } from './strategies/types/jwt-payload.type';
 import { UsersService } from '../users/users.service';
+import { FilesService } from '../files/files.service';
 import { AllConfigType } from '../config/config.type';
 import { MailService } from '../mail/mail.service';
 import { RoleEnum } from '../roles/roles.enum';
@@ -28,12 +29,14 @@ import { Session } from '../session/domain/session';
 import { SessionService } from '../session/session.service';
 import { StatusEnum } from '../statuses/statuses.enum';
 import { User } from '../users/domain/user';
+import { FileDto } from '../files/dto/file.dto';
 
 @Injectable()
 export class AuthService {
   constructor(
     private jwtService: JwtService,
     private usersService: UsersService,
+    private filesService: FilesService,
     private sessionService: SessionService,
     private mailService: MailService,
     private configService: ConfigService<AllConfigType>,
@@ -113,9 +116,9 @@ export class AuthService {
     socialData: SocialInterface,
   ): Promise<LoginResponseDto> {
     let user: NullableType<User> = null;
+    let file: NullableType<FileDto> = null;
     const socialEmail = socialData.email?.toLowerCase();
     let userByEmail: NullableType<User> = null;
-
     if (socialEmail) {
       userByEmail = await this.usersService.findByEmail(socialEmail);
     }
@@ -142,12 +145,19 @@ export class AuthService {
         id: StatusEnum.active,
       };
 
+      if (socialData.picture) {
+        file = await this.filesService.create({
+          path: socialData.picture,
+        });
+      }
+
       user = await this.usersService.create({
         email: socialEmail ?? null,
         firstName: socialData.firstName ?? null,
         lastName: socialData.lastName ?? null,
         socialId: socialData.id,
         provider: authProvider,
+        photo: file,
         role,
         status,
       });
